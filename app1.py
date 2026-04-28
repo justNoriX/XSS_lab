@@ -12,9 +12,9 @@ show_code_visible = False
 
 code_snippets = {
     "none": "<div>{{ user_input }}</div>",
-    "low": "<div class=\"{{ user_input }}\">",
-    "medium": "<a href=\"{{ user_input }}\">",
-    "high": "<script>\n  var msg = '{{ user_input }}';\n  console.log(msg);\n</script>",
+    "class_atr": "<div class=\"{{ user_input }}\">",
+    "href_atr": "<a href=\"{{ user_input }}\">",
+    "js_chain": "<script>\n  var msg = '{{ user_input }}';\n  console.log(msg);\n</script>",
     "template": "<script>\n  const info = `Użytkownik: {{ user_input }}`;\n  console.log(info);\n</script>"
 }
 
@@ -32,7 +32,7 @@ def sanitize_input(text):
         blacklist = ["alert", "script", "onerror", "onmouseover", "javascript"]
         temp_text = text
         for word in blacklist:
-            # Usuwamy bez względu na wielkość liter, ale tylko te słowa
+            # Usuwamy bez względu na wielkość liter
             import re
             insensitivity = re.compile(re.escape(word), re.IGNORECASE)
             temp_text = insensitivity.sub("[ZABLOKOWANE]", temp_text)
@@ -46,7 +46,7 @@ def sanitize_input(text):
 
 @app.route('/')
 def index():
-    levels = ["none", "low", "medium", "high", "template"]
+    levels = ["none", "class_atr", "href_atr", "js_chain", "template"]
     level_options = "".join([f'<option value="{l}" {"selected" if current_security_level == l else ""}>{l.upper()}</option>' for l in levels])
 
     filters = ["none", "case_sensitive", "blacklist", "encoding"]
@@ -132,8 +132,8 @@ def index():
             # Kontekst: Zwykły tekst wewnątrz DIV
             html_content += f"<div class='comment'><strong>{c['author']}:</strong> <div>{c['text']}</div></div>"
         
-        elif c['level'] == "low":
-            # Kontekst: Atrybut klasy (wymaga zamknięcia cudzysłowu)
+        elif c['level'] == "class_atr":
+            # Kontekst: Atrybut klasy
             html_content += f"""
                 <div class='comment'>
                     <strong>{c['author']}:</strong> 
@@ -142,8 +142,8 @@ def index():
                     </div>
                 </div>
             """            
-        elif c['level'] == "medium":
-            # Kontekst: Atrybut href (pozwala na javascript:alert(1))
+        elif c['level'] == "href_atr":
+            # Kontekst: Atrybut href
             html_content += f"""
                 <div class='comment'>
                     <strong>{c['author']}:</strong> 
@@ -153,7 +153,7 @@ def index():
                 </div>
             """
             
-        elif c['level'] == "high":
+        elif c['level'] == "js_chain":
             # Kontekst: Wewnątrz bloku skryptu (wymaga ucieczki z ' ')
             html_content += f"""
                 <div class='comment'>
