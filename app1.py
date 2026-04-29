@@ -13,6 +13,7 @@ show_code_visible = False
 code_snippets = {
     "none": "<div>{{ user_input }}</div>",
     "class_atr": "<div class=\"{{ user_input }}\">",
+    "img_atr": "<img src=/images/{{ user_input }}.png>",
     "href_atr": "<a href=\"{{ user_input }}\">",
     "js_chain": "<script>\n  var msg = '{{ user_input }}';\n  console.log(msg);\n</script>",
     "template": "<script>\n  const info = `Użytkownik: {{ user_input }}`;\n  console.log(info);\n</script>"
@@ -46,7 +47,7 @@ def sanitize_input(text):
 
 @app.route('/')
 def index():
-    levels = ["none", "class_atr", "href_atr", "js_chain", "template"]
+    levels = ["none", "class_atr", "img_atr", "href_atr", "js_chain", "template"]
     level_options = "".join([f'<option value="{l}" {"selected" if current_security_level == l else ""}>{l.upper()}</option>' for l in levels])
 
     filters = ["none", "case_sensitive", "blacklist", "encoding"]
@@ -67,7 +68,7 @@ def index():
         <style>
             body {{ font-family: sans-serif; line-height: 1.6; margin: 20px; background: #f4f4f4; }}
             .container {{ max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .settings {{ background: #333; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
+            .settings {{ background: #333; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;}}
             .comment {{ border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-left: 5px solid #007bff; background: #fff; }}
             .comment-info {{ font-size: 0.8em; color: #666; margin-bottom: 5px; border-bottom: 1px solid #eee; }}
             .code-preview {{ background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; font-family: monospace; margin-bottom: 20px; white-space: pre; }}
@@ -79,6 +80,9 @@ def index():
     </head>
     <body>
         <div class="container">
+            <div style="text-align: right; margin-bottom: 5px;">
+                <a href="/dom_tracker" class="btn-blue" style="text-decoration: none; padding: 2px 5px; display: inline-block;">DOM-Based Lab</a>
+            </div>
             <div class="settings">
                 <form action="/set_security" method="POST">
                     <strong>Kontekst: </strong>
@@ -107,13 +111,12 @@ def index():
 
             <form action="/add_comment" method="POST">
                 <input type="text" name="author" placeholder="Twoje imię" style="width:100%; padding:8px; margin-bottom:10px;">
-                <textarea name="comment" placeholder="Twój payload" style="width:100%; height:80px; padding:8px;"></textarea>
+                <textarea name="comment" placeholder="Komentarz" style="width:100%; height:80px; padding:8px;"></textarea>
                 <button type="submit" class="btn-blue" style="width:100%">Wyślij</button>
             </form>
-
+            <p>Made by NoriX</p>
             <hr>
             <h3>Wynik renderowania:</h3>
-            <h6>Made by NoriX</h6>
     """
 
 #    if show_code_visible:
@@ -141,7 +144,19 @@ def index():
                         Treść: {c['text']} 
                     </div>
                 </div>
-            """            
+            """
+
+        elif c['level'] == "img_atr":
+            # Kontekst: Atrybut obrazka
+            html_content += f"""
+                <div class='comment'>
+                    <strong>{c['author']}:</strong> 
+                    <img src=/images/{c['text']}.png>
+                        Treść: {c['text']} 
+                    </div>
+                </div>
+            """   
+
         elif c['level'] == "href_atr":
             # Kontekst: Atrybut href
             html_content += f"""
@@ -164,6 +179,7 @@ def index():
                     </script>
                 </div>
             """
+
         elif c['level'] == "template":
             # Kontekst: JavaScript Template Literal
             html_content += f"""
@@ -175,6 +191,7 @@ def index():
                     </script>
                 </div>
             """
+
 
     html_content += "</div></body></html>"
     return html_content
@@ -205,6 +222,61 @@ def show_code():
     global show_code_visible
     show_code_visible = not show_code_visible
     return redirect('/')
+
+@app.route('/dom_tracker')
+def dom_tracker():
+    return """
+    <!DOCTYPE html>
+    <html lang="pl">
+        <head>
+        <title>Wyszukiwarka</title>
+        <style>
+            body {{ font-family: sans-serif; line-height: 1.6; margin: 20px; background: #f4f4f4; }}
+            .container {{ max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+            .settings {{ background: #333; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;}}
+            .comment {{ border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-left: 5px solid #007bff; background: #fff; }}
+            .comment-info {{ font-size: 0.8em; color: #666; margin-bottom: 5px; border-bottom: 1px solid #eee; }}
+            .code-preview {{ background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; font-family: monospace; margin-bottom: 20px; white-space: pre; }}
+            button {{ cursor: pointer; padding: 8px 15px; border-radius: 4px; border: none; }}
+            .btn-blue {{ background: #007bff; color: white; }}
+            .btn-red {{ background: #dc3545; color: white; }}
+            select {{ padding: 5px; border-radius: 4px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Wyszukiwarka (DOM XSS)</h1>
+            
+            <form method="GET" action="/dom_tracker">
+                <input type="text" name="search" placeholder="Czego szukasz?">
+                <button type="submit">Szukaj</button>
+            </form>
+            
+            <br>
+            <div id="results"></div>
+            
+            <div id="search-tracking"></div>
+
+            <script>
+                // SOURCE: parametr ?search= z paska adresu URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchTerm = urlParams.get('search');
+
+                if (searchTerm) {
+                    // Wyświetlamy tekst bezpiecznie (to NIE JEST podatne)
+                    document.getElementById('results').innerText = "Szukałeś: " + searchTerm;
+
+                    // SINK: tag <img>, gdzie wpisujemy zmienną searchTerm prosto w atrybut src
+                    let trackingDiv = document.getElementById('search-tracking');
+                    trackingDiv.innerHTML = '<img src="/resources/images/tracker.gif?searchTerms=' + searchTerm + '">';
+                }
+            </script>
+            
+            <br><br>
+            <a href="/">Powrót do głównego laba</a>
+    </body>
+    </html>
+    """
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
