@@ -82,6 +82,7 @@ def index():
         <div class="container">
             <div style="text-align: right; margin-bottom: 5px;">
                 <a href="/dom_tracker" class="btn-blue" style="text-decoration: none; padding: 2px 5px; display: inline-block;">DOM-Based Lab</a>
+                <a href="/reflected" class="btn-blue" style="text-decoration: none; padding: 2px 5px; display: inline-block;">Reflected Lab</a>
             </div>
             <div class="settings">
                 <form action="/set_security" method="POST">
@@ -273,6 +274,39 @@ def dom_tracker():
             
             <br><br>
             <a href="/">Powrót do głównego laba</a>
+    </body>
+    </html>
+    """
+
+@app.route('/reflected')
+def reflected():
+    search_term = request.args.get('search', '')
+    return f"""
+    <!DOCTYPE html>
+    <html lang="pl">
+        <head>
+        <title>Wyszukiwarka</title>
+        <style>
+            body {{ font-family: sans-serif; line-height: 1.6; margin: 20px; background: #f4f4f4; }}
+            .container {{ max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Wyszukaj (reflected XSS)</h1>
+            
+            <form method="GET" action="/reflected">
+                <input type="text" name="search" placeholder="Czego szukasz?" value="{search_term}">
+                <button type="submit">Szukaj</button>
+            </form>
+            
+            <br>
+            <div id="results">
+            {f"Ostatnio szukano: <strong>{search_term}</strong>" if search_term else ""}
+            </div>
+            <br><br>
+            <a href="/">Powrót do głównego laba</a>
+            
     </body>
     </html>
     """
