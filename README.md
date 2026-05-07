@@ -1,0 +1,3 @@
+This environment was designed for educational purposes to demonstrate common XSS vulnerabilities and bypass techniques. It provides a focused overview of various XSS injection contexts and is intended as a sandbox for security training. Please note that this is not a comprehensive review of each defense and bypass method, rather a brief demonstration.
+ 
+**Disclaimer**: This application is intentionally insecure. Do not deploy to production or expose it to the public internet.
