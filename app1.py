@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect
 import html
 import os
+import bleach
 
 app = Flask(__name__)
 
@@ -44,6 +45,10 @@ def sanitize_input(text):
         # FILTR 3: Zamiana < i > na encje HTML
         return text.replace("<", "&lt;").replace(">", "&gt;")
     
+    elif current_filter == "impossible":
+        legal_tags = ['b', 'i', 'u', 'em', 'strong']
+        return bleach.clean(text, tags=legal_tags)
+
     return text
 
 @app.route('/')
@@ -51,7 +56,7 @@ def index():
     levels = ["none", "class_atr", "img_atr", "href_atr", "js_chain", "template"]
     level_options = "".join([f'<option value="{l}" {"selected" if current_security_level == l else ""}>{l.upper()}</option>' for l in levels])
 
-    filters = ["none", "case_sensitive", "blacklist", "encoding"]
+    filters = ["none", "case_sensitive", "blacklist", "encoding", "impossible"]
     filter_options = "".join([f'<option value="{f}" {"selected" if current_filter == f else ""}>{f.upper()}</option>' for f in filters])
 
     html_content = f"""
